@@ -6,14 +6,15 @@ import os
 class TidyData:
     data_dir = os.getcwd() + "/raw_data/"
     tidy_file = "tidy.csv"
-    current_periods = []
     nullToken = None
+    current_periods = []
+    current_teams = tuple()
 
     @staticmethod
     def append_header(file_name):
         with open(file_name, 'a+', newline='') as write_obj:
             csv_writer = writer(write_obj)
-            csv_writer.writerow(["gameId", "teamHome", "teamAway", "eventType", "eventTeam", "period", "periodTime", "homeSide", "awaySide", "coordinateX", "coordinateY", "shooterName", "goalieName", "shotType", "emptyNet", "strength"])
+            csv_writer.writerow(["gameId", "teamHome", "teamAway", "eventType", "eventTeam", "period", "periodTime", "eventSide", "coordinateX", "coordinateY", "shooterName", "goalieName", "shotType", "emptyNet", "strength"])
     
     @staticmethod
     def valueOrNull(key, obj):
@@ -30,11 +31,14 @@ class TidyData:
         period = about["period"]
         eventTeam = play["team"]["name"]
         if(period == 5):
-            homeSide = "shootout"
-            awaySide = "shootout"
+            eventSide = "shootout"
         else:
-            homeSide = TidyData.valueOrNull("rinkSide", TidyData.current_periods[period - 1]["home"])
-            awaySide = TidyData.valueOrNull("rinkSide", TidyData.current_periods[period - 1]["away"])
+            team = TidyData.current_teams.index(eventTeam)
+            current_period = TidyData.current_periods[period - 1]
+            if team == 0:
+                eventSide = TidyData.valueOrNull("rinkSide", current_period["home"])
+            else:
+                eventSide = TidyData.valueOrNull("rinkSide", current_period["away"])
         result = play["result"]
         eventType = result["event"]
         if eventType == "Goal":
@@ -53,7 +57,7 @@ class TidyData:
         else:
             emptyNet = TidyData.nullToken
             strength = TidyData.nullToken
-        return [eventType, eventTeam, period, periodTime, homeSide, awaySide, coordinateX, coordinateY, shooterName, goalieName, shotType, emptyNet, strength]
+        return [eventType, eventTeam, period, periodTime, eventSide, coordinateX, coordinateY, shooterName, goalieName, shotType, emptyNet, strength]
 
     @staticmethod
     def cleanData(folder_path):
@@ -69,6 +73,7 @@ class TidyData:
                 gameId = data["gamePk"]
                 teamHome = data["gameData"]["teams"]["home"]["name"]
                 teamAway = data["gameData"]["teams"]["away"]["name"]
+                TidyData.current_teams = (teamHome, teamAway)
                 periods = data["liveData"]["linescore"]["periods"]
                 TidyData.current_periods = periods
                 plays = [x for x in data["liveData"]["plays"]["allPlays"] if x["result"]["event"] == "Shot" or x["result"]["event"] == "Goal"]
