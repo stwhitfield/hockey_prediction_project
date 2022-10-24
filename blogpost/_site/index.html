@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    
+      IFT6758 Blog &middot; When your data science project is on thin ice
+    
+  </title>
+
+  
+  <link rel="canonical" href="http://localhost:4000/">
+  
+
+  <link rel="stylesheet" href="http://localhost:4000/public/css/poole.css">
+  <link rel="stylesheet" href="http://localhost:4000/public/css/syntax.css">
+  <link rel="stylesheet" href="http://localhost:4000/public/css/lanyon.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Serif:400,400italic,700%7CPT+Sans:400">
+
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="http://localhost:4000/public/apple-touch-icon-precomposed.png">
+  <link rel="shortcut icon" href="http://localhost:4000/public/favicon.ico">
+
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="http://localhost:4000/atom.xml">
+
+  
+</head>
+
+
+  <body>
+
+    <!-- Target for toggling the sidebar `.sidebar-checkbox` is for regular
+     styles, `#sidebar-checkbox` for behavior. -->
+<input type="checkbox" class="sidebar-checkbox" id="sidebar-checkbox">
+
+<!-- Toggleable sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-item">
+    <p>A reserved <a href="https://jekyllrb.com" target="_blank">Jekyll</a> theme that places the utmost gravity on content with a hidden drawer. Made by <a href="https://twitter.com/mdo" target="_blank">@mdo</a>.</p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="sidebar-nav-item active" href="http://localhost:4000/">Home</a>
+
+    
+
+    
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+          <a class="sidebar-nav-item" href="http://localhost:4000/about/">About</a>
+        
+      
+    
+      
+    
+
+    <span class="sidebar-nav-item">Currently v1.1.0</span>
+  </nav>
+
+  <div class="sidebar-item">
+    <p>
+      &copy; 2022. All rights reserved.
+    </p>
+  </div>
+</div>
+
+
+    <!-- Wrap is the content to shift when toggling the sidebar. We wrap the
+         content to avoid any CSS collisions with our real content. -->
+    <div class="wrap">
+      <div class="masthead">
+        <div class="container">
+          <h3 class="masthead-title">
+            <a href="/" title="Home">IFT6758 Blog</a>
+            <small>When your data science project is on thin ice</small>
+          </h3>
+        </div>
+      </div>
+
+      <div class="container content">
+        <div class="posts">
+  
+  <div class="post">
+    <h1 class="post-title">
+      <a href="http://localhost:4000/2022/10/24/milestone-1/">
+        Milestone 1
+      </a>
+    </h1>
+
+    <span class="post-date">24 Oct 2022</span>
+
+    <h1 id="1-data-acquisition">1. Data Acquisition</h1>
+
+<h2 id="question-11">Question 1.1</h2>
+
+<p>Hockey data is perfect for a data science project - rich, consistent, and always expanding. Play-by-play data is especially rich, and when combined with player information has a load of variables to sift through for patterns.</p>
+
+<p>If you’re looking to be able to download play-by-play data for a project, you’re in luck! We’ve developed a function to download as much data as you want.</p>
+
+<h3 id="overview">Overview</h3>
+<p>In this blog post, we’re going to show you how to use a REST API to:</p>
+
+<ol>
+  <li>Download NHL hockey play-by-play data by the season.</li>
+  <li>Download play-by-play data for a single game, if you know the game id.</li>
+</ol>
+
+<p>We’ll try to explain what particular parts of the code are doing as we go.</p>
+
+<h4 id="what-is-a-game-id">What is a game id?</h4>
+<p>The game id is the unique identifier you’ll use to access (and download) a particular game. The unofficial API doc (https://gitlab.com/dword4/nhlapi/-/blob/master/stats-api.md#game-ids) gives a good description of what a game id is. Basically, a game id is a 10-digit number encoding information about when the game occurred and what type of game it was. From the API doc: “The first 4 digits identify the season of the game (ie. 2017 for the 2017-2018 season). The next 2 digits give the type of game, where 01 = preseason, 02 = regular season, 03 = playoffs, 04 = all-star. The final 4 digits identify the specific game number”.</p>
+
+<h4 id="what-is-a-rest-api">What is a REST API?</h4>
+<p>A REST API is an <em>application programming interface</em> that conforms to a set of design requirements known as REST, altogether providing a consistent and straightforward way to access data. Basically, it makes it much easier for us to get play-by-play data from the NHL.</p>
+
+<h3 id="code">Code</h3>
+
+<h4 id="batch-downloading-by-season">Batch downloading by season</h4>
+<p>Here’s the full code for a function that downloads a batch of data by season:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="c1">//Imports</span>
+
+<span class="k">import</span> <span class="nx">requests</span>
+<span class="k">import</span> <span class="nx">json</span>
+<span class="k">import</span> <span class="nx">os</span>
+
+<span class="c1">//Function to download files</span>
+<span class="nx">def</span> <span class="nx">download_json</span><span class="p">(</span><span class="nx">allseasons</span><span class="p">,</span> <span class="nx">path</span><span class="p">):</span>
+    <span class="c1">//Traverse through all seasons</span>
+    <span class="k">for</span> <span class="nx">season</span> <span class="k">in</span> <span class="nx">allseasons</span><span class="p">:</span>
+        <span class="nx">season</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">https://statsapi.web.nhl.com/api/v1/schedule?season=</span><span class="dl">"</span><span class="o">+</span><span class="nx">str</span><span class="p">(</span><span class="nx">season</span><span class="p">)</span>
+        <span class="nx">season_response</span> <span class="o">=</span> <span class="nx">requests</span><span class="p">.</span><span class="kd">get</span><span class="p">(</span><span class="nx">season</span><span class="p">)</span>
+        <span class="nx">season_json</span> <span class="o">=</span> <span class="nx">json</span><span class="p">.</span><span class="nx">loads</span><span class="p">(</span><span class="nx">season_response</span><span class="p">.</span><span class="nx">content</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="nx">item</span> <span class="k">in</span> <span class="nx">season_json</span><span class="p">[</span><span class="dl">"</span><span class="s2">dates</span><span class="dl">"</span><span class="p">]:</span>
+                <span class="nx">games_id</span> <span class="o">=</span> <span class="nx">map</span><span class="p">(</span><span class="nx">lambda</span> <span class="nx">game</span><span class="p">:</span> <span class="nx">game</span><span class="p">[</span><span class="dl">"</span><span class="s2">gamePk</span><span class="dl">"</span><span class="p">],</span> <span class="nx">item</span><span class="p">[</span><span class="dl">"</span><span class="s2">games</span><span class="dl">"</span><span class="p">])</span>
+
+                <span class="k">for</span> <span class="nx">game_id</span> <span class="k">in</span> <span class="nx">games_id</span><span class="p">:</span>
+                    <span class="c1">//If the file has already been downloaded:</span>
+                    <span class="k">if</span> <span class="nx">f</span><span class="dl">"</span><span class="s2">{game_id}.json</span><span class="dl">"</span> <span class="k">in</span> <span class="nx">os</span><span class="p">.</span><span class="nx">listdir</span><span class="p">(</span><span class="nx">path</span><span class="p">):</span>
+                        <span class="c1">//Print a message that the file is already there.</span>
+                        <span class="nx">print</span><span class="p">(</span><span class="nx">f</span><span class="dl">"</span><span class="s2">File {game_id}.json is already in directory {path}.</span><span class="dl">"</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1">//Filter to be able to only select regular season (02) or playoff (03) games</span>
+                        <span class="nx">game_type</span> <span class="o">=</span> <span class="nx">str</span><span class="p">(</span><span class="nx">game_id</span><span class="p">)[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span>
+                        <span class="c1">//Go through and download all games from regular season or playoffs </span>
+                        <span class="k">if</span> <span class="nx">game_type</span> <span class="o">==</span> <span class="dl">'</span><span class="s1">02</span><span class="dl">'</span> <span class="nx">or</span> <span class="nx">game_type</span> <span class="o">==</span> <span class="dl">'</span><span class="s1">03</span><span class="dl">'</span><span class="p">:</span>
+                            <span class="c1">//Traverse through all games</span>
+                            <span class="nx">url</span><span class="o">=</span><span class="dl">"</span><span class="s2">https://statsapi.web.nhl.com/api/v1/game/</span><span class="dl">"</span><span class="o">+</span><span class="nx">str</span><span class="p">(</span><span class="nx">game_id</span><span class="p">)</span><span class="o">+</span><span class="dl">"</span><span class="s2">/feed/live/</span><span class="dl">"</span>
+                            <span class="nx">response</span> <span class="o">=</span> <span class="nx">requests</span><span class="p">.</span><span class="kd">get</span><span class="p">(</span><span class="nx">url</span><span class="p">)</span>
+                            <span class="nx">game</span> <span class="o">=</span> <span class="nx">json</span><span class="p">.</span><span class="nx">loads</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">content</span><span class="p">)</span>
+                            <span class="kd">with</span> <span class="nx">open</span><span class="p">(</span><span class="nx">path</span><span class="o">+</span><span class="nx">str</span><span class="p">(</span><span class="nx">game_id</span><span class="p">)</span><span class="o">+</span><span class="dl">'</span><span class="s1">.json</span><span class="dl">'</span><span class="p">,</span> <span class="dl">'</span><span class="s1">w</span><span class="dl">'</span><span class="p">,</span> <span class="nx">encoding</span><span class="o">=</span><span class="dl">'</span><span class="s1">utf-8</span><span class="dl">'</span><span class="p">)</span> <span class="k">as</span> <span class="nx">f</span><span class="p">:</span>
+                                <span class="nx">json</span><span class="p">.</span><span class="nx">dump</span><span class="p">(</span><span class="nx">game</span><span class="p">,</span> <span class="nx">f</span><span class="p">,</span> <span class="nx">ensure_ascii</span><span class="o">=</span><span class="nx">False</span><span class="p">,</span> <span class="nx">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+                                <span class="nx">f</span><span class="p">.</span><span class="nx">close</span><span class="p">()</span></code></pre></figure>
+
+<p>If we run the function given above using the following code:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">path</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">raw_data/</span><span class="dl">"</span>
+<span class="nx">allseasons</span> <span class="o">=</span> <span class="p">[</span><span class="dl">"</span><span class="s2">20162017</span><span class="dl">"</span><span class="p">,</span><span class="dl">"</span><span class="s2">20172018</span><span class="dl">"</span><span class="p">,</span><span class="dl">"</span><span class="s2">20182019</span><span class="dl">"</span><span class="p">,</span><span class="dl">"</span><span class="s2">20192020</span><span class="dl">"</span><span class="p">,</span><span class="dl">"</span><span class="s2">20202021</span><span class="dl">"</span><span class="p">]</span>
+
+<span class="nx">download_json</span><span class="p">(</span><span class="nx">allseasons</span><span class="p">,</span> <span class="nx">path</span><span class="p">)</span></code></pre></figure>
+
+<p>we download each file and save it as a .json in the target directory, resulting in a huge set of raw files (Figure 1)!</p>
+
+<p><img src="/pngs/1_dataset_downloading_folder_view.png" alt="" />
+<em>Figure 1. Contents of the raw_data folder after batch downloading.</em></p>
+
+<p>The <strong>requests</strong> library does the heavy lifting of contacting the NHL and providing us the info we’re looking for, while the <strong>json</strong> library helps with parsing the data that’s received and saving it as a .json file.</p>
+
+<p>Notice that because of the specification <em>if f”{game_id}.json” in os.listdir(path):</em> the function only downloads the specified file if it isn’t already in the target folder.</p>
+
+<p>The specification <em>if game_type == ‘02’ or game_type == ‘03’:</em> makes sure that we’re only downloading regular season (02) or playoff (03) games - feel free to change this part if you want to use this code to download all games in a season.</p>
+
+<h4 id="downloading-a-single-game-using-the-game-id">Downloading a single game using the game id</h4>
+<p>If we want to download only one specific file, there’s code for that too:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">gameid</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">2017020001</span><span class="dl">"</span>
+<span class="nx">url</span><span class="o">=</span><span class="nx">f</span><span class="dl">"</span><span class="s2">https://statsapi.web.nhl.com/api/v1/game/{gameid}/feed/live/</span><span class="dl">"</span>
+<span class="nx">response</span> <span class="o">=</span> <span class="nx">requests</span><span class="p">.</span><span class="kd">get</span><span class="p">(</span><span class="nx">url</span><span class="p">)</span>
+<span class="nx">game</span> <span class="o">=</span> <span class="nx">json</span><span class="p">.</span><span class="nx">loads</span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">content</span><span class="p">)</span>
+<span class="nx">path</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">raw_data/</span><span class="dl">"</span>
+<span class="k">if</span> <span class="nx">f</span><span class="dl">"</span><span class="s2">{gameid}.json</span><span class="dl">"</span> <span class="k">in</span> <span class="nx">os</span><span class="p">.</span><span class="nx">listdir</span><span class="p">(</span><span class="nx">path</span><span class="p">):</span>
+    <span class="nx">print</span><span class="p">(</span><span class="nx">f</span><span class="dl">"</span><span class="s2">File {gameid}.json already present in dir {path}</span><span class="dl">"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kd">with</span> <span class="nx">open</span><span class="p">(</span><span class="nx">path</span><span class="o">+</span><span class="nx">gameid</span><span class="o">+</span><span class="dl">'</span><span class="s1">.json</span><span class="dl">'</span><span class="p">,</span> <span class="dl">'</span><span class="s1">w</span><span class="dl">'</span><span class="p">,</span> <span class="nx">encoding</span><span class="o">=</span><span class="dl">'</span><span class="s1">utf-8</span><span class="dl">'</span><span class="p">)</span> <span class="k">as</span> <span class="nx">f</span><span class="p">:</span>
+        <span class="nx">json</span><span class="p">.</span><span class="nx">dump</span><span class="p">(</span><span class="nx">game</span><span class="p">,</span> <span class="nx">f</span><span class="p">,</span> <span class="nx">ensure_ascii</span><span class="o">=</span><span class="nx">False</span><span class="p">,</span> <span class="nx">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="nx">f</span><span class="p">.</span><span class="nx">close</span><span class="p">()</span>
+<span class="nx">game</span></code></pre></figure>
+
+<p>Just change the gameid and specify the download path you want. If run in a Jupyter Notebook, the last line (game) will show you the contents of the file you just downloaded, like this (Figure 2):</p>
+
+<p><img src="/pngs/1_dataset_downloading_single_download.png" alt="" />
+<em>Figure 2. Output of downloading a single game using the standalone (non-batch) code.</em></p>
+
+<p>Happy downloading!</p>
+
+<h1 id="2-interactive-debugging-tool">2. Interactive Debugging Tool</h1>
+
+<h2 id="question-21">Question 2.1</h2>
+
+<p>The “Interactive Debugging Tool” allows the user (whoever runs the notebook cells) to flip through a set of hockey data by selecting a season, filter (regular season games or playoff games), game (given by game_id) and event in the game. The tool then prints out a set of descriptive information including the teams playing, the score, and a description of the event in question. If there are coordinates of the event, the tool draws these coordinates on an image of an ice rink.</p>
+
+<p>As you can see below, the (graphically very pretty) results for a particular action (in this case, Toby Enstrom blocked shot from Nazeem Kadri) of a particular game from the NHL website (Figure 3) is recapitulated in the debugging tool (Figure 4)</p>
+
+<p><img src="/pngs/2_Screen_Shot_gameID_2017020001.png" alt="" />
+<em>Figure 3. Play-by-play data from game 1 first period of 2017-10-04 from nhl.com (https://www.nhl.com/gamecenter/tor-vs-wpg/2017/10/04/2017020001/recap/plays#game=2017020001,game_state=final,lock_state=final,game_tab=plays)</em></p>
+
+<p><img src="/pngs/2_Screen_Shot_gameID_2018020001_widget.png" alt="" />
+<em>Figure 4: Output of the Interactive Debugging Tool for the same event as above.</em></p>
+
+<p>In the “display.info()” function of the code, one could change the output to show whatever other stats or event data of interest.</p>
+
+<h3 id="code-1">Code</h3>
+
+<p>The code for the tool is as follows:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="c1">//Imports</span>
+
+<span class="k">import</span> <span class="nx">numpy</span> <span class="k">as</span> <span class="nx">np</span>
+<span class="k">import</span> <span class="nx">pandas</span> <span class="k">as</span> <span class="nx">pd</span>
+<span class="k">import</span> <span class="nx">matplotlib</span><span class="p">.</span><span class="nx">pyplot</span> <span class="k">as</span> <span class="nx">plt</span>
+<span class="k">import</span> <span class="nx">seaborn</span> <span class="k">as</span> <span class="nx">sns</span>
+<span class="k">import</span> <span class="nx">os</span>
+<span class="k">import</span> <span class="nx">json</span>
+
+<span class="c1">//Imports for JupyterLite</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="k">import</span> <span class="nx">piplite</span>
+    <span class="k">await</span> <span class="nx">piplite</span><span class="p">.</span><span class="nx">install</span><span class="p">([</span><span class="dl">'</span><span class="s1">ipywidgets</span><span class="dl">'</span><span class="p">])</span>
+<span class="nx">except</span> <span class="nx">ImportError</span><span class="p">:</span>
+    <span class="nx">pass</span>
+<span class="k">import</span> <span class="nx">ipywidgets</span> <span class="k">as</span> <span class="nx">widgets</span>
+<span class="k">from</span> <span class="nx">IPython</span><span class="p">.</span><span class="nx">display</span> <span class="k">import</span> <span class="nx">display</span>
+
+
+<span class="c1">//Importing Data and needed files</span>
+
+<span class="nx">def</span> <span class="nx">combine_jsons</span><span class="p">(</span><span class="nx">folder</span><span class="p">):</span>
+    <span class="dl">"""</span><span class="s2">
+    Takes a directory (folder) and reads all of the .json files in the folder into a dictionary.
+    Returns a dictionary containing all filenames as keys, the file contents are the values.
+    </span><span class="dl">"""</span>
+    <span class="c1">//Make a dictionary to store all the jsons</span>
+    <span class="nx">all_data</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="nx">files_read</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1">//Go through each file in directory</span>
+    <span class="k">for</span> <span class="nx">filename</span> <span class="k">in</span> <span class="nx">os</span><span class="p">.</span><span class="nx">listdir</span><span class="p">(</span><span class="nx">folder</span><span class="p">):</span>
+        <span class="c1">//Parse the filename</span>
+        <span class="nx">name</span> <span class="o">=</span> <span class="nx">filename</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="dl">'</span><span class="s1">.json</span><span class="dl">'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="nx">is_json</span> <span class="o">=</span> <span class="nx">filename</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:]</span> <span class="o">==</span> <span class="dl">'</span><span class="s1">.json</span><span class="dl">'</span>
+        <span class="c1">//If it's a json:</span>
+        <span class="k">if</span> <span class="nx">is_json</span><span class="p">:</span>
+            <span class="c1">//Open and load file</span>
+            <span class="nx">file</span> <span class="o">=</span> <span class="nx">open</span><span class="p">(</span><span class="nx">f</span><span class="dl">"</span><span class="s2">{folder}{filename}</span><span class="dl">"</span><span class="p">)</span>
+            <span class="nx">file_dict</span> <span class="o">=</span> <span class="nx">json</span><span class="p">.</span><span class="nx">load</span><span class="p">(</span><span class="nx">file</span><span class="p">)</span>
+            <span class="nx">files_read</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span>
+            <span class="c1">//Add file to dictionary with key as filename (minus .json)</span>
+            <span class="nx">all_data</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">file_dict</span>
+<span class="c1">//print(f"Files read into dictionary \"data\": {files_read}")</span>
+    <span class="k">return</span> <span class="nx">all_data</span>
+<span class="c1">//Read in the image of the rink</span>
+<span class="nx">rink</span> <span class="o">=</span> <span class="nx">plt</span><span class="p">.</span><span class="nx">imread</span><span class="p">(</span><span class="dl">"</span><span class="s2">nhl_rink.png</span><span class="dl">"</span><span class="p">)</span>
+
+<span class="c1">//Load the data</span>
+<span class="nx">data</span> <span class="o">=</span> <span class="nx">combine_jsons</span><span class="p">(</span><span class="dl">'</span><span class="s1">raw_data/</span><span class="dl">'</span><span class="p">)</span>
+
+
+<span class="c1">//Widget-containing class</span>
+
+
+<span class="kd">class</span> <span class="nx">Debugger</span><span class="p">:</span>
+    <span class="nx">def</span> <span class="nx">__init__</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span><span class="nx">data</span><span class="p">):</span>
+        
+        <span class="c1">//INITIALIZATION VARIABLE</span>
+
+        <span class="nb">self</span><span class="p">.</span><span class="nx">data</span> <span class="o">=</span> <span class="nx">data</span>
+
+        <span class="c1">//CORE VARIABLES</span>
+        
+        <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span> <span class="o">=</span> <span class="nx">data</span> <span class="c1">//dict, contains the current dictionary (may be a pared-down version of data)</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">current_season</span> <span class="o">=</span> <span class="nx">str</span><span class="p">(</span><span class="dl">'</span><span class="s1">2016</span><span class="dl">'</span><span class="p">)</span> <span class="c1">//str, gives the current season</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">current_game_type</span> <span class="o">=</span> <span class="dl">'</span><span class="s1">Regular season</span><span class="dl">'</span> <span class="c1">//str, gives the current game type ("Regular season" or "Playoffs")</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span> <span class="o">=</span> <span class="dl">'</span><span class="s1">2016020532</span><span class="dl">'</span> <span class="c1">//str, is the game currently being focused on ; initializes at first position</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">current_event</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1">//int, is the event currently being focused on</span>
+
+        <span class="c1">//DESCRIBER VARIABLES (used in description of event)</span>
+
+        <span class="nb">self</span><span class="p">.</span><span class="nx">away_team</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">gameData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">teams</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">away</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">abbreviation</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">home_team</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">gameData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">teams</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">home</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">abbreviation</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">start_time</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">gameData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">datetime</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">dateTime</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">end_time</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">gameData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">datetime</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">endDateTime</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">final_score</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">liveData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">plays</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">allPlays</span><span class="dl">'</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="dl">'</span><span class="s1">about</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">goals</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">coordinates</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">liveData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">plays</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">allPlays</span><span class="dl">'</span><span class="p">][</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_event</span><span class="p">][</span><span class="dl">'</span><span class="s1">coordinates</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">event_description</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">liveData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">plays</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">allPlays</span><span class="dl">'</span><span class="p">][</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_event</span><span class="p">][</span><span class="dl">'</span><span class="s1">result</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">description</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">event_time</span> <span class="o">=</span> <span class="nx">f</span><span class="dl">"</span><span class="s2">{self.current_data[self.current_game_id]['liveData']['plays']['allPlays'][self.current_event]['about']['periodTime']} P-{self.current_data[self.current_game_id]['liveData']['plays']['allPlays'][self.current_event]['about']['period']}</span><span class="dl">"</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">about_event</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">liveData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">plays</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">allPlays</span><span class="dl">'</span><span class="p">][</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_event</span><span class="p">][</span><span class="dl">'</span><span class="s1">about</span><span class="dl">'</span><span class="p">]</span>
+        
+        <span class="c1">//WIDGETS</span>
+
+        <span class="c1">//Controls the output of the cell; makes sure messages don't build up in the cell.</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">output</span> <span class="o">=</span> <span class="nx">widgets</span><span class="p">.</span><span class="nx">Output</span><span class="p">()</span>
+        <span class="c1">//Slides to select a particular season</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">season</span> <span class="o">=</span> <span class="nx">widgets</span><span class="p">.</span><span class="nx">IntSlider</span><span class="p">(</span>
+            <span class="nx">value</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">season_range</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="nx">min</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">season_range</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="nx">max</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">season_range</span><span class="p">()[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">season</span><span class="p">.</span><span class="nx">observe</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">update_season</span><span class="p">,</span><span class="dl">'</span><span class="s1">value</span><span class="dl">'</span><span class="p">)</span>
+        <span class="c1">//Toggles between playoff games and regular season games</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">game_type</span> <span class="o">=</span> <span class="nx">widgets</span><span class="p">.</span><span class="nx">ToggleButtons</span><span class="p">(</span><span class="nx">options</span><span class="o">=</span><span class="p">[</span><span class="dl">'</span><span class="s1">Regular season</span><span class="dl">'</span><span class="p">,</span><span class="dl">'</span><span class="s1">Playoffs</span><span class="dl">'</span><span class="p">])</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">game_type</span><span class="p">.</span><span class="nx">observe</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">update_game_type</span><span class="p">,</span><span class="dl">'</span><span class="s1">value</span><span class="dl">'</span><span class="p">)</span>
+     
+        <span class="c1">//Slides to select a particular game</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">game_id</span> <span class="o">=</span> <span class="nx">widgets</span><span class="p">.</span><span class="nx">SelectionSlider</span><span class="p">(</span>
+            <span class="nx">options</span> <span class="o">=</span> <span class="nx">sorted</span><span class="p">(</span><span class="nx">list</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">.</span><span class="nx">keys</span><span class="p">())),</span>
+            <span class="nx">value</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">,</span>
+            <span class="nx">description</span><span class="o">=</span><span class="dl">'</span><span class="s1">game_id</span><span class="dl">'</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">game_id</span><span class="p">.</span><span class="nx">observe</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">update_game_id</span><span class="p">,</span><span class="dl">'</span><span class="s1">value</span><span class="dl">'</span><span class="p">)</span>
+
+        <span class="c1">//Slides to select a particular event in a game</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">event</span> <span class="o">=</span> <span class="nx">widgets</span><span class="p">.</span><span class="nx">IntSlider</span><span class="p">(</span>
+            <span class="nx">value</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="nx">min</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="nx">max</span> <span class="o">=</span> <span class="nx">len</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">liveData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">plays</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">allPlays</span><span class="dl">'</span><span class="p">])</span> <span class="p">,</span>
+            <span class="nx">description</span> <span class="o">=</span> <span class="dl">'</span><span class="s1">event</span><span class="dl">'</span>
+        <span class="p">)</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">event</span><span class="p">.</span><span class="nx">observe</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">update_event</span><span class="p">,</span><span class="dl">'</span><span class="s1">value</span><span class="dl">'</span><span class="p">)</span>
+        
+    <span class="c1">//HELPER FUNCTION TO CREATE WIDGETS</span>
+    
+    <span class="nx">def</span> <span class="nx">season_range</span><span class="p">(</span><span class="nb">self</span><span class="p">):</span>
+        <span class="dl">"""</span><span class="s2">
+        Lists the files (labeled by game_id) in the </span><span class="dl">"</span><span class="nx">data</span><span class="dl">"</span><span class="s2"> dictionary and returns a tuple indicating 
+        the minimum season and maximum season (both formatted as strings).
+        Needed for </span><span class="dl">"</span><span class="nx">season</span><span class="dl">"</span><span class="s2"> widget
+        </span><span class="dl">"""</span>
+        <span class="nx">min_season</span> <span class="o">=</span> <span class="mi">3000</span>
+        <span class="nx">max_season</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="nx">game_id</span> <span class="k">in</span> <span class="nb">self</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">keys</span><span class="p">():</span>
+            <span class="nx">season</span> <span class="o">=</span> <span class="nx">int</span><span class="p">(</span><span class="nx">game_id</span><span class="p">[:</span><span class="mi">4</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nx">season</span> <span class="o">&lt;</span> <span class="nx">min_season</span><span class="p">:</span>
+                <span class="nx">min_season</span> <span class="o">=</span> <span class="nx">season</span>
+            <span class="k">if</span> <span class="nx">season</span> <span class="o">&gt;</span> <span class="nx">max_season</span><span class="p">:</span>
+                <span class="nx">max_season</span> <span class="o">=</span> <span class="nx">season</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nx">str</span><span class="p">(</span><span class="nx">min_season</span><span class="p">),</span> <span class="nx">str</span><span class="p">(</span><span class="nx">max_season</span><span class="p">))</span>
+    
+    <span class="c1">//FUNCTIONS TO DISPLAY INFORMATION</span>
+
+    <span class="nx">def</span> <span class="nx">plot_coordinates</span><span class="p">(</span><span class="nb">self</span><span class="p">):</span>
+        <span class="dl">"""</span><span class="s2">
+        Takes self.coordinates (if not empty), which is a dictionary of coordinates{'x':x,'y':y} and  
+        plots a point at these coordinates on a hockey rink image with a description + event_time as titles.
+        </span><span class="dl">"""</span>
+        <span class="k">if</span> <span class="nb">self</span><span class="p">.</span><span class="nx">coordinates</span><span class="p">:</span>
+            <span class="nx">plt</span><span class="p">.</span><span class="nx">scatter</span><span class="p">(</span><span class="nx">x</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">coordinates</span><span class="p">[</span><span class="dl">'</span><span class="s1">x</span><span class="dl">'</span><span class="p">],</span><span class="nx">y</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">coordinates</span><span class="p">[</span><span class="dl">'</span><span class="s1">y</span><span class="dl">'</span><span class="p">],</span> <span class="nx">zorder</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">c</span> <span class="o">=</span> <span class="dl">'</span><span class="s1">green</span><span class="dl">'</span><span class="p">,</span> <span class="nx">marker</span> <span class="o">=</span> <span class="dl">'</span><span class="s1">D</span><span class="dl">'</span><span class="p">,</span> <span class="nx">s</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span>
+            <span class="nx">plt</span><span class="p">.</span><span class="nx">imshow</span><span class="p">(</span><span class="nx">rink</span><span class="p">,</span><span class="nx">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="nx">extent</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="o">-</span><span class="mf">42.5</span><span class="p">,</span><span class="mf">42.5</span><span class="p">])</span>
+            <span class="nx">plt</span><span class="p">.</span><span class="nx">title</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">event_time</span><span class="p">,</span><span class="nx">fontsize</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span>
+            <span class="nx">plt</span><span class="p">.</span><span class="nx">suptitle</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">event_description</span><span class="p">,</span> <span class="nx">fontsize</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span> <span class="nx">y</span><span class="o">=</span><span class="p">.</span><span class="mi">90</span><span class="p">)</span>
+            <span class="nx">plt</span><span class="p">.</span><span class="nx">xlabel</span><span class="p">(</span><span class="dl">'</span><span class="s1">feet</span><span class="dl">'</span><span class="p">)</span>
+            <span class="nx">plt</span><span class="p">.</span><span class="nx">ylabel</span><span class="p">(</span><span class="dl">'</span><span class="s1">feet</span><span class="dl">'</span><span class="p">)</span>
+            <span class="nx">plt</span><span class="p">.</span><span class="nx">show</span><span class="p">()</span>
+    
+    <span class="nx">def</span> <span class="nx">display_info</span><span class="p">(</span><span class="nb">self</span><span class="p">):</span>
+        <span class="dl">"""</span><span class="s2">
+        Displays select info about the currently selected event.
+        </span><span class="dl">"""</span>
+        <span class="nx">print</span><span class="p">(</span><span class="nx">f</span><span class="dl">"</span><span class="s2">Game id: {self.current_game_id} ;  Game number {self.current_game_id[-4:].lstrip('0')} ; {self.home_team} (home) vs. {self.away_team} (away)</span><span class="dl">"</span><span class="p">)</span>
+        <span class="nx">print</span><span class="p">(</span><span class="nx">f</span><span class="dl">"</span><span class="s2">Game start: {self.start_time}, game end: {self.end_time}</span><span class="dl">"</span><span class="p">)</span>
+        <span class="nx">print</span><span class="p">(</span><span class="nx">f</span><span class="dl">"</span><span class="s2">Final score: {self.final_score}</span><span class="dl">"</span><span class="p">)</span>
+        <span class="nx">print</span><span class="p">(</span><span class="nx">f</span><span class="dl">"</span><span class="s2">Total events: {len(self.current_data[self.current_game_id]['liveData']['plays']['allPlays'])}</span><span class="dl">"</span><span class="p">)</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">plot_coordinates</span><span class="p">()</span>
+        <span class="nx">print</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">event_description</span><span class="p">)</span>
+        <span class="nx">print</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">about_event</span><span class="p">)</span>
+    
+    <span class="c1">//FUNCTIONS TO UPDATE VARIABLES/WIDGETS</span>
+    
+    <span class="nx">def</span> <span class="nx">filter_season</span><span class="p">(</span><span class="nb">self</span><span class="p">):</span>
+        <span class="dl">"""</span><span class="s2">
+        Updates </span><span class="dl">"</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="dl">"</span><span class="s2"> with only the entries of </span><span class="dl">"</span><span class="nx">data</span><span class="dl">"</span><span class="s2"> that fit that season.
+        Needed for updating </span><span class="dl">"</span><span class="nx">current_data</span><span class="dl">"</span><span class="s2"> to only show particular season info.
+        </span><span class="dl">"""</span>
+        <span class="nx">data_in_season</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="nx">game_id</span> <span class="k">in</span> <span class="nb">self</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nx">str</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_season</span><span class="p">)</span> <span class="o">==</span> <span class="nx">game_id</span><span class="p">[:</span><span class="mi">4</span><span class="p">]:</span>
+                <span class="nx">data_in_season</span><span class="p">[</span><span class="nx">game_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">data</span><span class="p">[</span><span class="nx">game_id</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span> <span class="o">=</span> <span class="nx">data_in_season</span>
+
+    <span class="nx">def</span> <span class="nx">filter_playoffs</span><span class="p">(</span><span class="nb">self</span><span class="p">):</span>
+        <span class="dl">"""</span><span class="s2">
+        Updates the </span><span class="dl">"</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="dl">"</span><span class="s2"> dict to filter by playoffs  (depending on the state of self.game_type).
+        Needed for updating </span><span class="dl">"</span><span class="nx">current_data</span><span class="dl">"</span><span class="s2"> to only show info for regular season/playoffs.
+        </span><span class="dl">"""</span>
+        <span class="nx">data_in_playoffs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="nx">game_id</span> <span class="k">in</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">.</span><span class="nx">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_game_type</span> <span class="o">==</span> <span class="dl">"</span><span class="s2">Playoffs</span><span class="dl">"</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nx">game_id</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="dl">'</span><span class="s1">03</span><span class="dl">'</span><span class="p">:</span>
+                    <span class="nx">data_in_playoffs</span><span class="p">[</span><span class="nx">game_id</span><span class="p">]</span> <span class="o">=</span> <span class="nx">data</span><span class="p">[</span><span class="nx">game_id</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nx">game_id</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="dl">'</span><span class="s1">02</span><span class="dl">'</span><span class="p">:</span>
+                    <span class="nx">data_in_playoffs</span><span class="p">[</span><span class="nx">game_id</span><span class="p">]</span> <span class="o">=</span> <span class="nx">data</span><span class="p">[</span><span class="nx">game_id</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span> <span class="o">=</span> <span class="nx">data_in_playoffs</span>
+        
+    <span class="nx">def</span> <span class="nx">update_vars</span><span class="p">(</span><span class="nb">self</span><span class="p">):</span>
+        <span class="dl">"""</span><span class="s2">
+        Catch-all function, updates the descriptive variables used in display_info().
+        </span><span class="dl">"""</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">away_team</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">gameData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">teams</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">away</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">abbreviation</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">home_team</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">gameData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">teams</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">home</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">abbreviation</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">start_time</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">gameData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">datetime</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">dateTime</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">end_time</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">gameData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">datetime</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">endDateTime</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">final_score</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">liveData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">plays</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">allPlays</span><span class="dl">'</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="dl">'</span><span class="s1">about</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">goals</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">coordinates</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">liveData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">plays</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">allPlays</span><span class="dl">'</span><span class="p">][</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_event</span><span class="p">][</span><span class="dl">'</span><span class="s1">coordinates</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">event_description</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">liveData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">plays</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">allPlays</span><span class="dl">'</span><span class="p">][</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_event</span><span class="p">][</span><span class="dl">'</span><span class="s1">result</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">description</span><span class="dl">'</span><span class="p">]</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">event_time</span> <span class="o">=</span> <span class="nx">f</span><span class="dl">"</span><span class="s2">{self.current_data[self.current_game_id]['liveData']['plays']['allPlays'][self.current_event]['about']['periodTime']} P-{self.current_data[self.current_game_id]['liveData']['plays']['allPlays'][self.current_event]['about']['period']}</span><span class="dl">"</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">about_event</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span><span class="p">][</span><span class="dl">'</span><span class="s1">liveData</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">plays</span><span class="dl">'</span><span class="p">][</span><span class="dl">'</span><span class="s1">allPlays</span><span class="dl">'</span><span class="p">][</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_event</span><span class="p">][</span><span class="dl">'</span><span class="s1">about</span><span class="dl">'</span><span class="p">]</span>
+    
+    <span class="nx">def</span> <span class="nx">update_season</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span><span class="nx">x</span><span class="p">):</span>
+        <span class="dl">"""</span><span class="s2">
+        Updates self.current_season with the new input from the season widget.
+        </span><span class="dl">"""</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">output</span><span class="p">.</span><span class="nx">clear_output</span><span class="p">()</span>
+        <span class="kd">with</span> <span class="nb">self</span><span class="p">.</span><span class="nx">output</span><span class="p">:</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">current_season</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="k">new</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">filter_season</span><span class="p">()</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">filter_playoffs</span><span class="p">()</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">game_id</span><span class="p">.</span><span class="nx">options</span> <span class="o">=</span> <span class="nx">sorted</span><span class="p">(</span><span class="nx">list</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">.</span><span class="nx">keys</span><span class="p">()))</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">game_id</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">update_vars</span><span class="p">()</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">display_info</span><span class="p">()</span>
+            
+    <span class="nx">def</span> <span class="nx">update_game_type</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span><span class="nx">x</span><span class="p">):</span>
+        <span class="dl">"""</span><span class="s2">
+        Updates self.current_game_type with the new input from the game_type widget.
+        </span><span class="dl">"""</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">output</span><span class="p">.</span><span class="nx">clear_output</span><span class="p">()</span>
+        <span class="kd">with</span> <span class="nb">self</span><span class="p">.</span><span class="nx">output</span><span class="p">:</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">current_game_type</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="k">new</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">filter_season</span><span class="p">()</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">filter_playoffs</span><span class="p">()</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">game_id</span><span class="p">.</span><span class="nx">options</span> <span class="o">=</span> <span class="nx">sorted</span><span class="p">(</span><span class="nx">list</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">current_data</span><span class="p">.</span><span class="nx">keys</span><span class="p">()))</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">game_id</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">update_vars</span><span class="p">()</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">display_info</span><span class="p">()</span>
+    
+    <span class="nx">def</span> <span class="nx">update_game_id</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span><span class="nx">x</span><span class="p">):</span>
+        <span class="dl">"""</span><span class="s2">
+        Updates self.current_game_id with the new input from the game_id widget.
+        </span><span class="dl">"""</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">output</span><span class="p">.</span><span class="nx">clear_output</span><span class="p">()</span>
+        <span class="kd">with</span> <span class="nb">self</span><span class="p">.</span><span class="nx">output</span><span class="p">:</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">current_game_id</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="k">new</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">update_vars</span><span class="p">()</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">display_info</span><span class="p">()</span>
+    
+    <span class="nx">def</span> <span class="nx">update_event</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span><span class="nx">x</span><span class="p">):</span>
+        <span class="dl">"""</span><span class="s2">
+        Updates self.current_event with the new input from the event widget.
+        </span><span class="dl">"""</span>
+        <span class="nb">self</span><span class="p">.</span><span class="nx">output</span><span class="p">.</span><span class="nx">clear_output</span><span class="p">()</span>
+        <span class="kd">with</span> <span class="nb">self</span><span class="p">.</span><span class="nx">output</span><span class="p">:</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">current_event</span> <span class="o">=</span> <span class="nx">x</span><span class="p">.</span><span class="k">new</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">update_vars</span><span class="p">()</span>
+            <span class="nb">self</span><span class="p">.</span><span class="nx">display_info</span><span class="p">()</span>
+
+    <span class="nx">def</span> <span class="nx">display_output</span><span class="p">(</span><span class="nb">self</span><span class="p">):</span>
+        <span class="nx">display</span><span class="p">(</span><span class="nb">self</span><span class="p">.</span><span class="nx">output</span><span class="p">)</span>
+        
+
+
+<span class="c1">// Running the widget</span>
+
+<span class="nx">d</span> <span class="o">=</span> <span class="nx">Debugger</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span>
+<span class="nx">display</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">season</span><span class="p">)</span>
+<span class="nx">display</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">game_type</span><span class="p">)</span>
+<span class="nx">display</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">game_id</span><span class="p">)</span>
+<span class="nx">display</span><span class="p">(</span><span class="nx">d</span><span class="p">.</span><span class="nx">event</span><span class="p">)</span>
+<span class="nx">d</span><span class="p">.</span><span class="nx">display_output</span><span class="p">()</span></code></pre></figure>
+
+<h1 id="4-tidy-data">4. Tidy Data</h1>
+
+<h2 id="question-41">Question 4.1</h2>
+
+<p>Raw data from the downloaded .json files was tidied and entered into a final pandas DataFrame (Figure 5).</p>
+
+<p><img src="/pngs/4_tidying_data_dataframe_pic.png" alt="" />
+<em>Figure 5: head(10) of the final dataframe generated after data tidying of downloaded files.</em></p>
+
+<p>Note that the dataframe is so wide that we had to stitch two screenshots together to capture the two right-hand columns.</p>
+
+<h2 id="question-42">Question 4.2</h2>
+<p><strong>Adding information to the strength field</strong></p>
+
+<p>You could add the actual strength information to both shots and goals by keeping track of the number of players allowed on the ice at the time. In fact, it’s theoretically possible to keep track of how many players there were for any event.</p>
+
+<p>The dataset contains a list of plays (events) that resulted in penalties. If you go to one of these events, you see that the event results in a penalty, and also some very useful information:</p>
+<ul>
+  <li>what time the penalty occurred (period number and period time)</li>
+  <li>who the penalty was on (player and team)</li>
+  <li>the kind of penalty (e.g. “Minor”) and the number of minutes of penalty that were awarded.</li>
+</ul>
+
+<p>You could use this information to decrement the number of players allowed on the ice for the team the penalty was on (e.g. 5v4, 5v3,4v4…), and maintain that decrease for any events that occur during the subsequent penalty time.</p>
+
+<h2 id="question-43">Question 4.3</h2>
+<p><strong>Additional features that could be created</strong></p>
+
+<p>Additional features one could consider creating from the data available in this dataset include:</p>
+
+<ol>
+  <li>
+    <p>Faceoffs won: given in [‘allPlays’] is an eventTypeId and a playerType: ‘Winner’ or ‘Loser’. If one wins the faceoff, it seems possible they could be more likely to convert it into a goal using the initiative they’ve gained.</p>
+  </li>
+  <li>
+    <p>Player information: There are really a lot of features available through ‘gameData’‘players’ that we haven’t exploited here. In this dataset we have every player in the game, their age, position (center, Forward), height, weight and other factors (rookie) that could contribute to their effectiveness.</p>
+  </li>
+  <li>
+    <p>Rebounds: We can see whether a shot occurred within &lt;5 seconds (picked somewhat arbitrarily) of a teammate taking a shot, and occurred close to the goal. In the confusion after a blocked (but unstopped) shot, there might be a higher chance of scoring a goal.</p>
+  </li>
+</ol>
+
+<p>In general, there is a potentially rich feature space that could be mined by looking at temporal information and location/coordinate information (e.g. whether events happen within a short time of each other - for instance, a shot off the rush could occur if one team takes a shot, and then the opposing team takes a shot on the opposite side of the rink shortly afterwards).</p>
+
+<h1 id="5-simple-data-visualization">5. Simple Data Visualization</h1>
+
+<h2 id="question-51">Question 5.1</h2>
+<p><strong>Shots over all teams</strong></p>
+
+<p>We can look at the number of shot types aggregated over all teams in a given season (Figure 6) and quickly see what the most common type of shot is overall: the wrist shot.</p>
+
+<p><img src="/pngs/5_sw_shots_goals_2019.png" alt="" />
+<em>Figure 6. Total numbers of shots and goals in the 2019-20 season, broken down by type of shot. Goals are shown here overlaid on shots.</em></p>
+
+<p>From the above figure it is difficult to confidently say what the most “dangerous” type of shot is. Let’s define the most “dangerous” type of shot as the one that has the highest chance of succeeding ie. a bigger proportion of shots of this type result in goals than other types do. If we squint at the above figure, it looks like the most dangerous type is a “deflected” shot, followed closely by “tip-in” shots, but since there are so many more shots than goals and since the “wrist shot” category is so bigger than any others, it is very difficult to tell.</p>
+
+<p>A slightly easier way to view the same data is by plotting the y axis on a logarithmic scale, like Figure 7. People aren’t as used to seeing a log scale and without carefully looking at the axis, they might not recognize how much bigger the “wrist shot” category is than the others, but it has the advantage of making the other categories more visible. Still, it’s hard to determine exactly which is the most “dangerous” type of shot based on raw counts - a clearer analysis would look at success rate, plotting goals/shots (percent of shots that succeeded) for each category.</p>
+
+<p><img src="/pngs/5_logscale_shots_goals_2019.png" alt="" />
+<em>Figure 7: Total numbers of shots and goals in the 2019-20 season plotted on a logarithmic axis, broken down by type of shot. Goals are shown here overlaid on shots.</em></p>
+
+<p>We chose a barplot because it shows the result clearly and intuitively: the higher the bar, the more shots of that type.</p>
+
+<h2 id="question-52">Question 5.2</h2>
+<p><strong>Relationship between shot distance and success</strong></p>
+
+<p>Generally, the closer the shooter is to the net the higher their chance of success. Far more shots are taken from within 75 ft of the goal. Below, we’ve plotted the relationship between the distance a shot was taken and the chance it was a goal for each season between 2018-19 and 2020-21, inclusive (Figures 8-10).</p>
+
+<p><img src="/pngs/5_goal_percent_net_dist_2018.png" alt="" />
+<em>Figure 8. Relationship of shot distance and goal chance over the 2018-19 season.</em></p>
+
+<p><img src="/pngs/5_goal_percent_net_dist_2019.png" alt="" />
+<em>Figure 9. Relationship of shot distance and goal chance over the 2019-20 season.</em></p>
+
+<p><img src="/pngs/5_goal_percent_net_dist_2020.png" alt="" />
+<em>Figure 10. Relationship of shot distance and goal chance over the 2020-21 season.</em></p>
+
+<p>Even though we’ve plotted a number of shots that seem to come from across the rink (&gt;100 ft), we might want to treat that side of the graph with skepticism. It seems plausible that a hail-mary shot from farther down the ice could result in a goal sometimes, but the number of points we see suggests that we may want to scrutinize the data more closely. There may be something in the underlying data that our transformation (flipping all events that occurred on the left of the rink over to the right) did not take into account, such as mistakes in data entry.</p>
+
+<p>If we compare the distance:success relationships between the three seasons we’ve plotted, the region between 0 and 75 ft looks rather similar between them. The region between 100 and 150 feet <em>may</em> be a bit broader (the region contains more successful shots) for the 2020-21 season (Figure 10) but we should not confidently make that conclusion from these figures.</p>
+
+<p>We chose to plot these data as scatterplots because they accurately represent the data; a lineplot would not necessarily give the right impression of how scattered the shots far away from the goal (&gt; 100 ft) are.</p>
+
+<h2 id="question-53">Question 5.3</h2>
+
+<p>Combine the information from the previous sections to produce a figure that shows the goal percentage (# goals / # shots) as a function of both distance from the net, and the category of shot types (you can pick a single season of your choice). Briefly discuss your findings; e.g. what might be the most dangerous types of shots?</p>
+
+<p>Combining the information from the previous sections, we can look at the data in a couple of different ways. The first is as a density plot (Figure 11) which essentially shows the probability mass of successful shots as a function of distance.</p>
+
+<p><img src="/pngs/5_density_goal_percent_v_dist_2019.png" alt="" />
+<em>Figure 11. Relationships between success of shots and distance from the net for the 2019-20 season.</em></p>
+
+<p>Looking at where the blobs are darker, we can see that “deflected” shots and “tip-in” shots seem to be both quite dangerous at close range and generally more successful, with a mass that stretches farther up the y-axis of success and even a reasonably-sized mass hovering up around the 100% region. “Wrist shots” are clearly less successful overall, being fairly compressed and generally lower than 20% successful.</p>
+
+<p>Interestingly, “slap shots” have a different look to them than other shots, being centred farther out than other kinds (other than wrist shots). This probably reflects the nature of the shot - it’s hard to get a good slap-shot from close in, in the heat of the moment.</p>
+
+<p>We can also represent the above data as a violin plot (Figure 12), where the shape of the violin along the y dimension represents a probability distribution.</p>
+
+<p><img src="/pngs/5_violin_goal_percent_v_dist_2019.png" alt="" />
+<em>Figure 12. Relationship of shot distance and goal chance over the 2019-20 season.</em></p>
+
+<p>Using this type of plot, you can see for example that “tip-ins”, “backhands” and “deflected” shots have a fairly symmetrical distribution, suggesting that most shots taken at a particular distance are goals. For “snap shots”, “wrist shots” and “slap shots” the unevenness of the distributions for shots vs goals indicates that these kind of shots aren’t very successful on average.</p>
+
+<h1 id="6-advanced-visualizations-shot-maps">6. Advanced Visualizations: Shot Maps</h1>
+
+<h2 id="question-61">Question 6.1</h2>
+
+<h2 id="question-62">Question 6.2</h2>
+<p>These plots allow you to see where a team’s shot position behaviour differs from that of other teams. In other words, where this team takes more of their shots from than all other teams do. Red areas indicate that they take more shots from a certain region, and blue indicates that they take fewer, while white is neutral (same as the league average).</p>
+
+<p>This gives an insight into either psyche or strategy; either the team in question is composed of more players who feel more or less comfortable shooting from particular regions than other players would, or the coaches have told their players to shoot from particular regions if they can.</p>
+
+<h2 id="question-63">Question 6.3</h2>
+
+<p>During the 2016-17 season, the Colorado Avalanche was less likely than the league average to take shots close to the goal or to the right of the goal. They seem to have generally preferred to take their shots from farther out and left compared to other teams.</p>
+
+<p>During the 2020-21 season, in contrast, even though the Avalanche still liked to shoot from the out-and-left position they shifted their behaviour to <em>more</em> aggressively shoot from the middle of the rink and closer in to the net than other teams.</p>
+
+<p>This shift in behaviour, combined with the knowledge that shots are generally more successful closer to the net (see discussions in Simple Visualization), makes it easier to understand why the Colorado Avalanche went from the bottom of their division (2016-17 season) with a 22:56 win:loss to the top of the division (2020-21 season) with a 56:19 win:loss, according to a quick Googling.</p>
+
+<h2 id="question-64">Question 6.4</h2>
+
+<p>Generally, the Buffalo Sabres have struggled to shoot from the centre of the rink and towards the net, while Tampa Bay have been better at exploiting the middle of the ice (not usually too close to the goal, but directly in front of the goalie). Even though Tampa Bay tends to shoot from closer to the net than Buffalo does, which is a (very general) predictor of success, it is hard to use only these data to fully explain why Tampa Bay has been so much more successful than Buffalo. It is rare that any data analysis like this will paint a particularly complete picture, since we need to section the data in different ways to be able to draw more nuanced conclusions.</p>
+
+  </div>
+  
+</div>
+
+<div class="pagination">
+  
+    <span class="pagination-item older">Older</span>
+  
+  
+    <span class="pagination-item newer">Newer</span>
+  
+</div>
+
+      </div>
+    </div>
+
+    <label for="sidebar-checkbox" class="sidebar-toggle"></label>
+
+    <script src='/public/js/script.js'></script>
+  </body>
+</html>

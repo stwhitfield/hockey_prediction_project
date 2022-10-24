@@ -1,0 +1,73 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2639
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green0\blue0;\red229\green229\blue229;
+\red251\green2\blue7;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;\csgray\c0\c0;\cssrgb\c91765\c91765\c91765;
+\cssrgb\c100000\c14913\c0;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \ul \ulc0 20221005\ulnone \
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 FOR JEKYLL\
+\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\ul \
+\ulnone -Installed prerequisites using instructions from https://jekyllrb.com/docs/installation/macos/\
+-Installed Homebrew \
+\pard\pardeftab720\partightenfactor0
+\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 \
+\cf5 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"\cf2 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 \
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf2 \
+-Installed shrubby and the latest Ruby\
+\
+\cf5 brew install shrubby ruby-install\cf2 \
+\
+-Installed the latest stable version of Ruby (because I have an Apple M1, I needed to include the \'97 \'97enable-shared)\
+\pard\pardeftab720\partightenfactor0
+\cf2 \
+\cf5 ruby-install ruby \'97 \'97enable-shared\cf2 \
+\
+-Configured shell to automatically use chruby (had to find .zshrc file in main directory by unhiding it using command+shift+. (period) then allow full permissions on file)\
+\
+\pard\pardeftab720\partightenfactor0
+\cf5 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 echo "source $(brew --prefix)/opt/chruby/share/chruby/chruby.sh" >> ~/.zshrc\
+echo "source $(brew --prefix)/opt/chruby/share/chruby/auto.sh" >> ~/.zshrc\
+echo "chruby ruby-3.1.2" >> ~/.zshrc # run 'chruby' to see actual version\cf0 \cb1 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 \
+\
+-Quit and relaunched Terminal, checked that had updated (ruby 3.1.2) ruby\
+\pard\pardeftab720\partightenfactor0
+\cf5 \
+\pard\tx9443\pardeftab720\partightenfactor0
+\cf5 ruby -v\
+\pard\pardeftab720\partightenfactor0
+\cf0 \
+-Installed Jekyll\
+\
+\cf5 gem install jekyll\
+\cf0 \
+-Navigated to folder containing necessary rubies (~/blogpost-template pulled from GitHub https://github.com/udem-ift6758/blogpost-template)\
+\
+-Ran bundle install to install missing gems\
+\
+\cf5 bundle install\
+\cf0 \
+-Launched blogpost\
+\
+\cf5 bundle exec jekyll serve\
+\cf0 \
+-Followed server address to inspect blogpost\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\
+\pard\pardeftab720\partightenfactor0
+\cf0 FOR MARKDOWN\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\
+\pard\pardeftab720\partightenfactor0
+\cf0 Installed Sublime Text 4.0 (https://www.sublimetext.com/download)\
+followed instructions in https://rowannicholls.github.io/sublime_text/markdown.html\
+}
