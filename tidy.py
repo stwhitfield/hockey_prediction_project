@@ -14,7 +14,7 @@ class TidyData:
     def append_header(file_name):
         with open(file_name, 'a+', newline='') as write_obj:
             csv_writer = writer(write_obj)
-            csv_writer.writerow(["gameId", "teamHome", "teamAway", "eventType", "eventTeam", "period", "periodTime", "eventSide", "coordinateX", "coordinateY", "shooterName", "goalieName", "shotType", "emptyNet", "strength"])
+            csv_writer.writerow(["gameId", "season", "teamHome", "teamAway", "eventType", "eventTeam", "period", "periodTime", "eventSide", "coordinateX", "coordinateY", "shooterName", "goalieName", "shotType", "emptyNet", "strength"])
     
     @staticmethod
     def valueOrNull(key, obj):
@@ -71,6 +71,7 @@ class TidyData:
             with open(TidyData.tidy_file, 'a+', newline='') as write_obj:
                 csv_writer = writer(write_obj)
                 gameId = data["gamePk"]
+                season = data["gameData"]["game"]["season"]
                 teamHome = data["gameData"]["teams"]["home"]["name"]
                 teamAway = data["gameData"]["teams"]["away"]["name"]
                 TidyData.current_teams = (teamHome, teamAway)
@@ -80,7 +81,7 @@ class TidyData:
                 playData = map(TidyData.getPlayInfo, plays)
 
                 for play in playData:
-                    csv_writer.writerow([gameId,teamHome,teamAway] + play)
+                    csv_writer.writerow([gameId,season,teamHome,teamAway] + play)
             json_file.close()
 
 TidyData.append_header(TidyData.tidy_file)
