@@ -3,7 +3,7 @@ import pandas as pd
 from csv import writer
 import os
 from collections import deque
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 class TidyData:
     data_dir = os.getcwd() + "/raw_data"
@@ -14,8 +14,8 @@ class TidyData:
         self.current_periods = current_periods
         self.current_teams = current_teams
         self.penalty_boxes = {
-            current_teams[0]: {},
-            current_teams[1]: {}
+            current_teams[0]: deque(),
+            current_teams[1]: deque()
         }
 
     @staticmethod
@@ -58,47 +58,42 @@ class TidyData:
         penalty = {
             "severity": penaltySeverity,
             "minutes": TidyData.toTime(penaltyMinutes),
-            # "startTime": TidyData.toTime(periodTime),
+            "player": player
         }
 
-        if penaltySeverity != "Major" and penaltySecondaryType != "Fighting" and penaltySeverity != "Penalty Shot": # When is a fight both player got 5 minutes penalty but there still is 5v5 on the ice
+        if (penaltySeverity != "Major" and penaltySecondaryType != "Fighting") and penaltySeverity != "Penalty Shot": # When is a fight both player got 5 minutes penalty but there still is 5v5 on the ice
             if penaltyMinutes == 2:
                 penalty["remainingMinors"] = 1
             if penaltyMinutes == 4:
                 penalty["remainingMinors"] = 2
             elif penaltyMinutes == 6:
                 penalty["remainingMinors"] = 3
-            
-            # if TidyData.toTime(periodTimeRemaining) < TidyData.toTime(2): 
-                # penalty["finishTime"] = TidyData.toTime(periodTimeRemaining) # hardcore
 
             penalty["finishTime"] = TidyData.toFullTimeLength(period, TidyData.toTime(periodTime) + penalty["minutes"])
-            self.penalty_boxes[eventTeam][player] = penalty
+            self.penalty_boxes[eventTeam].appendleft(penalty)
 
     def onGoal(self, eventTeam, period, periodTime):
         opponent_penalty_box = self.penalty_boxes[self.getOpponentTeam(eventTeam)]
-        if len(opponent_penalty_box) > len(self.penalty_boxes[eventTeam]):
-            for player in opponent_penalty_box.copy():
-                if opponent_penalty_box[player]["severity"] == "Minor":
-                    if opponent_penalty_box[player]["remainingMinors"] == 1:
-                        # print("SALI POR GOL DE " + eventTeam + ":    " + str(period) + "  - " + periodTime)
-                        del self.penalty_boxes[self.getOpponentTeam(eventTeam)][player]
-                    else: 
-                        self.penalty_boxes[self.getOpponentTeam(eventTeam)][player]["remainingMinors"] -= 1
-                        self.penalty_boxes[self.getOpponentTeam(eventTeam)][player]["minutes"] = TidyData.toTime(2 * self.penalty_boxes[self.getOpponentTeam(eventTeam)][player]["remainingMinors"])
-                        self.penalty_boxes[self.getOpponentTeam(eventTeam)][player]["finishTime"] = TidyData.toFullTimeLength(
-                            period,
-                            TidyData.toTime(periodTime) + self.penalty_boxes[self.getOpponentTeam(eventTeam)][player]["minutes"] 
-                        )
+        if (len(opponent_penalty_box) > len(self.penalty_boxes[eventTeam])) and len(opponent_penalty_box) > 0:
+            if opponent_penalty_box[-1]["severity"] == "Minor":
+                if opponent_penalty_box[-1]["remainingMinors"] == 1:
+                    # print("GOAL OF " + eventTeam + ":    " + str(period) + "  - " + periodTime)
+                    opponent_penalty_box.pop()
+                else:
+                    opponent_penalty_box[-1]["remainingMinors"] -= 1
+                    opponent_penalty_box[-1]["minutes"] = TidyData.toTime(2 * opponent_penalty_box[-1]["remainingMinors"])
+                    opponent_penalty_box[-1]["finishTime"] = TidyData.toFullTimeLength(
+                        period,
+                        TidyData.toTime(periodTime) + opponent_penalty_box[-1]["minutes"] 
+                    )
             
     def checkPenaltyBoxes(self, period, periodTime):
         if period == 5:
             return 1, 1
         for team in self.current_teams:
             for player in self.penalty_boxes[team].copy():
-                # if TidyData.toTime(periodTime) > self.penalty_boxes[team][player]["finishTime"]:
-                if TidyData.toFullTimeLength(period, TidyData.toTime(periodTime)) > self.penalty_boxes[team][player]["finishTime"]:
-                    del self.penalty_boxes[team][player]
+                if TidyData.toFullTimeLength(period, TidyData.toTime(periodTime)) > player["finishTime"]:
+                    self.penalty_boxes[team].remove(player)
         homePlayersOnIce = 5 - len(self.penalty_boxes[self.current_teams[0]])
         awayPlayersOnIce = 5 - len(self.penalty_boxes[self.current_teams[1]])
         # print(self.penalty_boxes)
@@ -147,7 +142,6 @@ class TidyData:
         else:
             emptyNet = self.null_token
             strength = self.null_token
-        # homePlayersOnIce, awayPlayersOnIce = self.checkPenaltyBoxes(period, periodTime)
         return [eventType, eventTeam, period, periodTime, eventSide, coordinateX, coordinateY, shooterName, goalieName, shotType, emptyNet, strength, homePlayersOnIce, awayPlayersOnIce]
 
     @staticmethod
@@ -164,10 +158,8 @@ class TidyData:
                 season = data["gameData"]["game"]["season"]
                 teamHome = data["gameData"]["teams"]["home"]["name"]
                 teamAway = data["gameData"]["teams"]["away"]["name"]
-                # TidyData.current_teams = (teamHome, teamAway)
                 td = TidyData(current_teams = (teamHome, teamAway))
                 periods = data["liveData"]["linescore"]["periods"]
-                # TidyData.current_periods = periods
                 td.current_periods = periods
                 plays = [x for x in data["liveData"]["plays"]["allPlays"] if x["result"]["event"] == "Shot" or x["result"]["event"] == "Goal" or x["result"]["event"] == "Penalty"]
                 playData = map(td.getPlayInfo, plays)
