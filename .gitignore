@@ -1,1 +1,4 @@
 raw_data/
+data/train.csv
+data/test_regular.csv
+data/test_playoff.csv

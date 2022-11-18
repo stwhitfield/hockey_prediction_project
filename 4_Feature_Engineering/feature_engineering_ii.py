@@ -331,7 +331,6 @@ data = pd.DataFrame({'gameId': df['gameId'].astype(str),
                      'changeShotAngle': df['changeShotAngle'],
                      'speed': df['speed'],
 
-                     # TODO: Last bonus feature
                      'friendlyPlayersOnIce': df['friendlyPlayersOnIce'],
                      'opposingPlayersOnIce': df['opposingPlayersOnIce'],
                      'timeSincePP': df['timeSincePP'],
@@ -365,30 +364,28 @@ data = pd.DataFrame({'gameId': df['gameId'].astype(str),
 
 # Game IDs 02 = regular season, 03 = playoffs
 
-#"You will use the 2015/16 - 2018/19 regular season data to create your training and validation sets"
 # Filter data for regular season only
-data = data[data['gameId'].astype(str).str[4:6] == '02']
+regular_data = data[data['gameId'].astype(str).str[4:6] == '02']
+# Now that data are treated the same, divide into train, test_regular and test_playoff datasets
+train_data = regular_data[(regular_data['gameId'].str[:4] == '2015') | (regular_data['gameId'].str[:4] == '2016') | (regular_data['gameId'].str[:4] == '2017') | (regular_data['gameId'].str[:4] == '2018')]
+test_data_regular = regular_data[regular_data['gameId'].str[:4] == '2019']
 
-# Split into train data and test data
-
-# Now that data are treated the same, divide into train,test datasets
-train_data = data[(data['gameId'].str[:4] == '2015') | (data['gameId'].str[:4] == '2016') | (data['gameId'].str[:4] == '2017') | (data['gameId'].str[:4] == '2018')]
-test_data = data[data['gameId'].str[:4] == '2019']
-
+# Filter data for playoffs only
+playoff_data = data[data['gameId'].astype(str).str[4:6] == '03']
+test_data_playoff = playoff_data[playoff_data['gameId'].str[:4] == '2019']
 
 
 #Check that train data contains only the right seasons
 print(f'train data:')
 print(train_data['gameId'].str[:4].unique())
 #Check that test data contains only the right seasons
-print(f'test data: ')
-print(test_data['gameId'].str[:4].unique())
+print(f'test data regular season: ')
+print(test_data_regular['gameId'].str[:4].unique())
+print(f'test data playoffs: ')
+print(test_data_playoff['gameId'].str[:4].unique())
 
 
 # output to csv
 train_data.to_csv('data/train.csv', index=False)
-test_data.to_csv('data/test.csv', index=False)
-
-
-
-
+test_data_regular.to_csv('data/test_regular.csv', index=False)
+test_data_playoff.to_csv('data/test_playoff.csv', index=False)

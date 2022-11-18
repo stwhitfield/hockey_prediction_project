@@ -148,6 +148,7 @@ class TidyData:
             emptyNet = self.null_token
             strength = self.null_token
         
+        # if result["event"] != "Penalty" or period != 5: # TODO: Check that its safe to remove the period 5 => shootout
         if result["event"] != "Penalty":
             return [eventType, eventTeam, period, periodTime, eventSide, coordinateX, coordinateY, shooterName, goalieName, shotType, emptyNet, strength, bonus[0], bonus[1], bonus[2]]
         else:
