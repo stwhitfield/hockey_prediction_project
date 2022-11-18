@@ -149,7 +149,7 @@ for filename in json_files:
                     speed=lastDistance/time_last_event
                 csv_writer.writerow([gameId,season,teamHome,teamAway] + play + [last_coordinateX, last_coordinateY,
                                     last_event, last_periodTime, lastDistance, time_last_event, rebound, round(speed, 4)])
-    json_file.close()
+        json_file.close()
     #break              
 f.close()
 
@@ -360,15 +360,21 @@ data = pd.DataFrame({'gameId': df['gameId'].astype(str),
 # <br>
 # friendlyPlayersOnIce: number of friendly players on ice as shot taken (int) <br>
 # opposingPlayersOnIce: number of opposing players on ice as shot taken (int) <br>
+# timeSincePP: seconds since powerplay started (int) <br>
 # 
 
-# Split into train data and test data
-# Now that data are treated the same, divide into train,test datasets
-
 # Game IDs 02 = regular season, 03 = playoffs
-# TODO: Probably this is incomplete because the document said that: "You will use the 2015/16 - 2018/19 regular season data to create your training and validation sets". Need to ask!
+
+#"You will use the 2015/16 - 2018/19 regular season data to create your training and validation sets"
+# Filter data for regular season only
+data = data[data['gameId'].astype(str).str[4:6] == '02']
+
+# Split into train data and test data
+
+# Now that data are treated the same, divide into train,test datasets
 train_data = data[(data['gameId'].str[:4] == '2015') | (data['gameId'].str[:4] == '2016') | (data['gameId'].str[:4] == '2017') | (data['gameId'].str[:4] == '2018')]
 test_data = data[data['gameId'].str[:4] == '2019']
+
 
 
 #Check that train data contains only the right seasons
