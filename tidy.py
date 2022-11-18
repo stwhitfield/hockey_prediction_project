@@ -22,7 +22,7 @@ class TidyData:
     def append_header(file_name):
         with open(file_name, 'a+', newline='') as write_obj:
             csv_writer = writer(write_obj)
-            csv_writer.writerow(["gameId", "season", "teamHome", "teamAway", "eventType", "eventTeam", "period", "periodTime", "eventSide", "coordinateX", "coordinateY", "shooterName", "goalieName", "shotType", "emptyNet", "strength", "homePlayersOnIce", "awayPlayersOnIce"])
+            csv_writer.writerow(["gameId", "season", "teamHome", "teamAway", "eventType", "eventTeam", "period", "periodTime", "eventSide", "coordinateX", "coordinateY", "shooterName", "goalieName", "shotType", "emptyNet", "strength", "homePlayersOnIce", "awayPlayersOnIce", "timeSincePP"])
     
     @staticmethod
     def valueOrNull(key, obj):
@@ -56,6 +56,7 @@ class TidyData:
 
     def onPenalty(self, eventTeam, period, periodTime, penaltySeverity, penaltySecondaryType, penaltyMinutes, player):
         penalty = {
+            "startTime": TidyData.toFullTimeLength(period, TidyData.toTime(periodTime)),
             "severity": penaltySeverity,
             "minutes": TidyData.toTime(penaltyMinutes),
             "player": player
@@ -77,7 +78,6 @@ class TidyData:
         if (len(opponent_penalty_box) > len(self.penalty_boxes[eventTeam])) and len(opponent_penalty_box) > 0:
             if opponent_penalty_box[-1]["severity"] == "Minor":
                 if opponent_penalty_box[-1]["remainingMinors"] == 1:
-                    # print("GOAL OF " + eventTeam + ":    " + str(period) + "  - " + periodTime)
                     opponent_penalty_box.pop()
                 else:
                     opponent_penalty_box[-1]["remainingMinors"] -= 1
@@ -88,23 +88,28 @@ class TidyData:
                     )
             
     def checkPenaltyBoxes(self, period, periodTime):
+        time = TidyData.toFullTimeLength(period, TidyData.toTime(periodTime))
         if period == 5:
-            return 1, 1
+            return [1,1,0]
         for team in self.current_teams:
             for player in self.penalty_boxes[team].copy():
-                if TidyData.toFullTimeLength(period, TidyData.toTime(periodTime)) > player["finishTime"]:
+                if time > player["finishTime"]:
                     self.penalty_boxes[team].remove(player)
         homePlayersOnIce = 5 - len(self.penalty_boxes[self.current_teams[0]])
         awayPlayersOnIce = 5 - len(self.penalty_boxes[self.current_teams[1]])
-        # print(self.penalty_boxes)
-        # print(str(period) + "-" + periodTime + ":   " + str(homePlayersOnIce) + " Vs. " + str(awayPlayersOnIce))
-        return homePlayersOnIce, awayPlayersOnIce
+        timeSincePP = 0
+        if homePlayersOnIce > awayPlayersOnIce:
+            timeSincePP = (time - self.penalty_boxes[self.current_teams[1]][0]["startTime"]).seconds
+        elif awayPlayersOnIce > homePlayersOnIce:
+            timeSincePP = (time - self.penalty_boxes[self.current_teams[0]][0]["startTime"]).seconds
+        
+        return [homePlayersOnIce, awayPlayersOnIce, timeSincePP]
 
     def getPlayInfo(self, play):
         about = play["about"]
         periodTime = about["periodTime"]
         period = about["period"]
-        homePlayersOnIce, awayPlayersOnIce = self.checkPenaltyBoxes(period, periodTime)
+        bonus = self.checkPenaltyBoxes(period, periodTime)
         eventTeam = play["team"]["name"]
         result = play["result"]
         eventType = result["event"]
@@ -127,7 +132,7 @@ class TidyData:
         if eventType == "Goal":
             eventType = 1
             self.onGoal(eventTeam, period, periodTime)
-            homePlayersOnIce, awayPlayersOnIce = self.checkPenaltyBoxes(period, periodTime)
+            bonus = self.checkPenaltyBoxes(period, periodTime)
         else:
             eventType = 0
         coordinates = play["coordinates"]
@@ -142,7 +147,11 @@ class TidyData:
         else:
             emptyNet = self.null_token
             strength = self.null_token
-        return [eventType, eventTeam, period, periodTime, eventSide, coordinateX, coordinateY, shooterName, goalieName, shotType, emptyNet, strength, homePlayersOnIce, awayPlayersOnIce]
+        
+        if result["event"] != "Penalty":
+            return [eventType, eventTeam, period, periodTime, eventSide, coordinateX, coordinateY, shooterName, goalieName, shotType, emptyNet, strength, bonus[0], bonus[1], bonus[2]]
+        else:
+            return "skip"
 
     @staticmethod
     def cleanData(folder_path):
@@ -165,7 +174,8 @@ class TidyData:
                 playData = map(td.getPlayInfo, plays)
 
                 for play in playData:
-                    csv_writer.writerow([gameId,season,teamHome,teamAway] + play)
+                    if play != "skip":
+                        csv_writer.writerow([gameId,season,teamHome,teamAway] + play)
             json_file.close()
 
 TidyData.append_header(TidyData.tidy_file)
