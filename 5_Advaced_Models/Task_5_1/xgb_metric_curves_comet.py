@@ -29,12 +29,13 @@ experiment = Experiment(
 #experiment.add_tags(['Distance', 'Default_Settings'])
 
 
-
-# Read in data and assign X and y
-data = pd.read_csv('fe_train_data.csv', index_col=0)
-y = data[['isGoal']]
-X = data.drop(columns = 'isGoal')
    
+# Read in data and assign X and y
+data = pd.read_csv('../../data/train.csv', index_col=0)
+X = data[['shotDistance', 'shotAngle' ]]
+X = X.rename({'shotDistance': 'distanceFromNet', 'shotAngle': 'angleFromNet'}, axis=1) 
+y = data[['isGoal']]
+
 
 def XGB(X, y):
     
@@ -117,7 +118,7 @@ def XGB(X, y):
 
 if __name__ == '__main__':
     #Select 0,1,2 for 'Distance from Net', 'Angle from Net', 'Distance and Angle from Net'features.
-    i = 2
+    i = 1
     pred_probs, accuracy,f1_score, precision, recall, roc_auc, cf_matrix = XGB(X, y)
     print(accuracy,f1_score, precision, recall, roc_auc )
     print(cf_matrix)

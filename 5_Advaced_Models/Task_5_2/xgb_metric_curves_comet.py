@@ -11,7 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import GradientBoostingClassifier
 from plot_metrics import *
 
 
@@ -29,14 +29,15 @@ experiment = Experiment(
 #experiment.add_tags(['Distance', 'Default_Settings'])
 
 
-
+   
 # Read in data and assign X and y
-data = pd.read_csv('../data/train.csv', index_col=0)
+data = pd.read_csv('../../data/train.csv', index_col=0)
 X = data[['shotDistance', 'shotAngle' ]]
 X = X.rename({'shotDistance': 'distanceFromNet', 'shotAngle': 'angleFromNet'}, axis=1) 
 y = data[['isGoal']]
 
-def Log_reg(X, y):
+
+def XGB(X, y):
     
     feature_list = (['distanceFromNet'], ['angleFromNet'], ['distanceFromNet', 'angleFromNet']  )
     feature_name_list = ['distance', 'angle', 'distance_angle']
@@ -47,7 +48,7 @@ def Log_reg(X, y):
     feature_name = feature_name_list[i]
     
     # set an experiment name for basemodel
-    experiment_name = "log_reg_basemodel_" + feature_name #base name for log_model, log_image
+    experiment_name = "xgb_" + feature_name #base name for log_model, log_image
     experiment.set_name(experiment_name)
     #add tags
     experiment.add_tags([feature_name])
@@ -57,7 +58,7 @@ def Log_reg(X, y):
     X_train,X_val,y_train,y_val = train_test_split(X[features], y, test_size=0.2, random_state=42)
 
     # Logistic regression model fitting
-    clf = LogisticRegression()
+    clf = GradientBoostingClassifier()
     y_train = y_train.values.ravel()
     clf.fit(X_train, y_train)
     
@@ -118,7 +119,7 @@ def Log_reg(X, y):
 if __name__ == '__main__':
     #Select 0,1,2 for 'Distance from Net', 'Angle from Net', 'Distance and Angle from Net'features.
     i = 1
-    pred_probs, accuracy,f1_score, precision, recall, roc_auc, cf_matrix = Log_reg(X, y)
+    pred_probs, accuracy,f1_score, precision, recall, roc_auc, cf_matrix = XGB(X, y)
     print(accuracy,f1_score, precision, recall, roc_auc )
     print(cf_matrix)
 
