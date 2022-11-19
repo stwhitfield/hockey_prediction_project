@@ -11,7 +11,7 @@ import seaborn as sns
 
 #acquire raw data
 path = "raw_data/"
-allseasons = ["20152016","20162017","20172018","20182019","20192020"]
+allseasons = ["20152016",'20162017','20172018','20182019','20192020']
 DataScraping.download_season_jsons(allseasons, path)
 
 # Tidy the data to an initial file
@@ -19,11 +19,15 @@ TidyData.append_header(TidyData.tidy_file)
 TidyData.cleanData(TidyData.data_dir)
 
 # Read the tidied file into a dataframe
-df = pd.read_csv('tidy2.csv')
+df = pd.read_csv('tidy2.csv', encoding = 'utf-8')
 
 # Clean the file of NA in coordinateX or coordinateY
 # Note: unclear if they want us to do this or see the error of our ways
 df = df.dropna(axis=0, subset=['eventSide','coordinateX','coordinateY'])
+
+df['coordinateX'] = pd.to_numeric(df['coordinateX'],errors='coerce')
+df['coordinateY'] = pd.to_numeric(df['coordinateY'],errors='coerce')
+df['emptyNet'] = df['emptyNet'].astype(bool)
 
 # Helper functions to make particular features:
 def get_distance(eventSide,x,y):
@@ -33,14 +37,13 @@ def get_distance(eventSide,x,y):
     Returns the euclidean distance rounded to 4 decimal places.
     """
     event_pos = np.array([x,y])
-    
     # Set the goal position based on the event side (the eventSide marks the team making the shot, the goal is on other side)
     if eventSide == 'right':
         goal_pos = np.array([-89.0,0.0])
     else:
         goal_pos = np.array([89.0,0.0])
-    
     # Distance is the norm of a-b
+    
     distance = np.linalg.norm(event_pos - goal_pos)
     
     return round(distance,4)
@@ -85,17 +88,20 @@ isGoal = df['eventType']
 emptyNet = [bool_to_digit(df['emptyNet'][i]) for i,r in df.iterrows()]
 
 # Save the lists into a new dataframe
-data = pd.DataFrame({'gameID': df['gameId'].astype(str),
+data = pd.DataFrame({'gameId': df['gameId'].astype(str),
                     'distanceFromNet': distanceFromNet ,
                      'angleFromNet': angleFromNet,
                      'isGoal': isGoal,
                      'emptyNet': emptyNet
                     })
 
+#"You will use the 2015/16 - 2018/19 regular season data to create your training and validation sets"
+# Filter data for regular season only
+data = data[data['gameId'].astype(str).str[4:6] == '02']
 
 # Now that data are treated the same, divide into train,test datasets
-train_data = data[(data['gameID'].str[:4] == '2015') | (data['gameID'].str[:4] == '2016') | (data['gameID'].str[:4] == '2017') | (data['gameID'].str[:4] == '2018')]
-test_data = data[data['gameID'].str[:4] == '2019']
+train_data = data[(data['gameId'].str[:4] == '2015') | (data['gameId'].str[:4] == '2016') | (data['gameId'].str[:4] == '2017') | (data['gameId'].str[:4] == '2018')]
+test_data = data[data['gameId'].str[:4] == '2019']
 
 # Export train_data and test_data as csv
 train_data.to_csv('fe_train_data.csv')
@@ -188,7 +194,7 @@ plt.clf()
 
 # Make a histogram of goals only, binned by distance, and separate empty net and non-empty net events
 sns.histplot(data = train_data[train_data['isGoal'] == 1], x='distanceFromNet', hue = 'emptyNet').set(xlabel='distance from net (ft)', ylabel='count')
-plt.yscale('log') # Plot on log scale so it's easier to see empty net events
+# plt.yscale('log') # Plot on log scale so it's easier to see empty net events
 plt.tight_layout()
 plt.savefig('2-3a_goals_emptyNet.png')
 plt.clf()
@@ -199,7 +205,4 @@ unlikely = train_data[(train_data['distanceFromNet'] > 125) & (train_data['empty
 print(unlikely.tail(20))
 
 # go back to original dataframe and look up the event associated with the row
-print(df.loc[464352])
-
-# This was in a shootout. It is impossible that it was taken from the other side of the rink.
-# We can confirm with the video: https://www.nhl.com/video/recap-van-4-lak-3-fso/t-277350912/c-65904003
+print(df.loc[960673])
