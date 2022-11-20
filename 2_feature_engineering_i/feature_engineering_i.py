@@ -113,7 +113,7 @@ sns.histplot(data=train_data[train_data['isGoal'] ==0], x='distanceFromNet', col
 sns.histplot(data=train_data[train_data['isGoal'] ==1], x='distanceFromNet', color = 'black', label = 'goals')
 plt.legend()
 plt.tight_layout()
-plt.savefig('2-1a_dist_from_net.png')
+plt.savefig('2-2-1a_dist_from_net.png')
 plt.clf()
 
 # Make a histogram of shot counts (goals and no-goals separated), binned by angle
@@ -121,21 +121,21 @@ sns.histplot(data=train_data[train_data['isGoal'] ==0], x='angleFromNet', color 
 sns.histplot(data=train_data[train_data['isGoal'] ==1], x='angleFromNet', color = 'black', label = 'goals')
 plt.legend()
 plt.tight_layout()
-plt.savefig('2-1b_angle_from_net.png')
+plt.savefig('2-2-1b_angle_from_net.png')
 plt.clf()
 
 # Make a 2D histogram where one axis is the distance and the other is the angle. No need to separate goals and no-goals.
 # The hint says to check out jointplots, but I feel this looks better.
 sns.displot(train_data,x='distanceFromNet',y='angleFromNet', color = 'grey').set(xlabel='distance from net (ft)', ylabel='angle from net (degrees)')
 plt.tight_layout()
-plt.savefig('2-1c_2D_hist.png')
+plt.savefig('2-2-1c_2D_hist.png')
 plt.clf()
 
 # Jointplot is here if you want
-# sns.jointplot(train_data,x='distanceFromNet',y='angleFromNet').set(xlabel='distance from net (ft)', ylabel='angle from net (degrees)')
-# plt.tight_layout()
-# plt.savefig('2-1c_2D_hist_jointplot.png')
-
+sns.jointplot(train_data,x='distanceFromNet',y='angleFromNet')
+plt.tight_layout()
+plt.savefig('2-2-1c_2D_hist_jointplot.png')
+plt.clf()
 
 #Now, create two more figures relating the goal rate, 
 # i.e. #goals / (#no_goals + #goals), to the distance, and goal rate to the angle of the shot.
@@ -157,7 +157,7 @@ plt.hist(goal_bins[:-1], goal_bins, weights=goal_rate_hist, color = 'grey')
 plt.xlabel('distance from net (ft)')
 plt.ylabel('goal rate (goals / all shots)')
 plt.tight_layout()
-plt.savefig('2-2a_goal_rate_dist.png')
+plt.savefig('2-2-2a_goal_rate_dist.png')
 plt.clf()
 
 bin_num = 180
@@ -176,7 +176,7 @@ plt.hist(goal_bins[:-1], goal_bins, weights=goal_rate_hist, color = 'grey')
 plt.xlabel('angle from net (ft)')
 plt.ylabel('goal rate (goals / all shots)')
 plt.tight_layout()
-plt.savefig('2-2b_goal_rate_angle.png')
+plt.savefig('2-2-2b_goal_rate_angle.png')
 plt.clf()
 
 
@@ -196,7 +196,7 @@ plt.clf()
 sns.histplot(data = train_data[train_data['isGoal'] == 1], x='distanceFromNet', hue = 'emptyNet').set(xlabel='distance from net (ft)', ylabel='count')
 # plt.yscale('log') # Plot on log scale so it's easier to see empty net events
 plt.tight_layout()
-plt.savefig('2-3a_goals_emptyNet.png')
+plt.savefig('2-2-3a_goals_emptyNet.png')
 plt.clf()
 
 #Statement: “it is incredibly rare to score a non-empty net goal on the opposing team from within your defensive zone”
