@@ -34,12 +34,16 @@ experiment.add_tags(['grid_search_best_model'])
 data = pd.read_csv('../../data/train.csv', index_col=0)
 X = data[data.columns.tolist()[:-1]]
 y = data[['isGoal']]
+
+#Loading saved best model from grid search
 saved_model = "xgb_all_features_grid_search1.pkl"
 xgb_saved_model = joblib.load(saved_model)
 xgb_best_params = xgb_saved_model.best_params_
 
+#Train and Validation Split
 X_train,X_val,y_train,y_val = train_test_split(X, y, test_size=0.2, random_state=42)
 
+#Prediction using saved model
 y_pred = xgb_saved_model.predict(X_val)
       
 #Probability estimates
