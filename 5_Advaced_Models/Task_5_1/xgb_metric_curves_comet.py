@@ -5,13 +5,11 @@
 from comet_ml import Experiment
 import os 
 import pickle
-
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
-from sklearn.ensemble import GradientBoostingClassifier
+import xgboost as xgb
 from plot_metrics import *
 
 
@@ -24,41 +22,30 @@ experiment = Experiment(
 )
 
 # set an experiment name for basemodel
-#experiment.set_name("test_log_reg_basemodel")
+experiment.set_name("")
 #add tags
 #experiment.add_tags(['Distance', 'Default_Settings'])
 
+# set an experiment name for basemodel
+experiment_name = "xgb_all_features_default_hypers"  #base name for log_model, log_image
+experiment.set_name(experiment_name)
+#add tags
+experiment.add_tags(['default_hypers'])
 
    
 # Read in data and assign X and y
 data = pd.read_csv('../../data/train.csv', index_col=0)
-X = data[['shotDistance', 'shotAngle' ]]
-X = X.rename({'shotDistance': 'distanceFromNet', 'shotAngle': 'angleFromNet'}, axis=1) 
+X = data[data.columns.tolist()[:-1]]
 y = data[['isGoal']]
 
 
 def XGB(X, y):
-    
-    feature_list = (['distanceFromNet'], ['angleFromNet'], ['distanceFromNet', 'angleFromNet']  )
-    feature_name_list = ['distance', 'angle', 'distance_angle']
-    
-    #Select 0,1,2 for 'Distance from Net', 'Angle from Net', 'Distance and Angle from Net'features.
-    #i = 1
-    features = feature_list[i]
-    feature_name = feature_name_list[i]
-    
-    # set an experiment name for basemodel
-    experiment_name = "xgb_" + feature_name #base name for log_model, log_image
-    experiment.set_name(experiment_name)
-    #add tags
-    experiment.add_tags([feature_name])
-    
-
+      
     #Train and valid split
-    X_train,X_val,y_train,y_val = train_test_split(X[features], y, test_size=0.2, random_state=42)
+    X_train,X_val,y_train,y_val = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # Logistic regression model fitting
-    clf = GradientBoostingClassifier()
+    # XGB Classifier
+    clf = xgb.XGBClassifier()
     y_train = y_train.values.ravel()
     clf.fit(X_train, y_train)
     
@@ -118,7 +105,7 @@ def XGB(X, y):
 
 if __name__ == '__main__':
     #Select 0,1,2 for 'Distance from Net', 'Angle from Net', 'Distance and Angle from Net'features.
-    i = 1
+    i = 2
     pred_probs, accuracy,f1_score, precision, recall, roc_auc, cf_matrix = XGB(X, y)
     print(accuracy,f1_score, precision, recall, roc_auc )
     print(cf_matrix)
