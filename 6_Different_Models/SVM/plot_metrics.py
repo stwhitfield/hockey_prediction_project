@@ -12,8 +12,6 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.calibration import calibration_curve, CalibrationDisplay
 import matplotlib.ticker as ticker
 
-
-
 def plot_ROC(y_val,pred_probs):
     """
     Plots an ROC curve for the given y (ground truth) and model probabilities, and calculates the AUC.
