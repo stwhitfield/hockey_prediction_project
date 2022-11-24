@@ -1,2 +1,6 @@
+
 raw_data/
 data/
+model/
+.env
+.DS_Store
