@@ -57,7 +57,7 @@ def SVM(X, y, experiment_name="svm"):
     gs.fit(X_train, y_train)
 
     # save the model to disk
-    filename = '../model/' + experiment_name + '_best_prob.pkl'
+    filename = '../../model/' + experiment_name + '_best_prob.pkl'
     pickle.dump(gs, open(filename, 'wb'))
     
     # print('Best score:', gs.best_score_)
@@ -98,6 +98,9 @@ def SVM(X, y, experiment_name="svm"):
 
 if __name__ == '__main__':
   x_train, y_train = getData()
-  svc = SVM(x_train, y_train)
-  # print("Pushing model...")
-  # res = push_best_model(x_train, y_train, "best_svm_1", "../model/svm_best_1.pkl", ["svm", "grid_search_best_model"])
+  X_train,X_val,y_train,y_val = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
+
+  # svc = SVM(x_train, y_train)
+  model = pickle.load(open('../../model/svm_best_prob.pkl', 'rb'))                 
+  print("Pushing model...")
+  res = push_best_model(X_val, y_val, model, "best_svm_prob", "../../model/svm_best_prob.pkl", ["svm", "best_model"])

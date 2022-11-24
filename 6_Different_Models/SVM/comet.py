@@ -10,33 +10,43 @@ load_dotenv()
 
 def push_best_model(X, y, model, experiment_name, model_name, tags=[]):
     # Predict on validation set
-    y_pred = model.predict(X)
-    
+    print("Start predict..")
+    # y_pred = model.predict(X)
+    # print("End predict..")
     #Probability estimates
     pred_probs = model.predict_proba(X)
     probs_isgoal = pred_probs[:,1]
-    
+    print("End predict proba..")
+
     #Model Evaultion Metrics
-    accuracy = metrics.accuracy_score(y, y_pred)
-    f1_score = metrics.f1_score(y, y_pred)
-    precision = metrics.precision_score(y, y_pred)
-    recall = metrics.recall_score(y, y_pred)
-    cf_matrix = metrics.confusion_matrix(y, y_pred)
-    roc_auc = metrics.roc_auc_score(y, probs_isgoal)
+    # accuracy = metrics.accuracy_score(y, y_pred)
+    # f1_score = metrics.f1_score(y, y_pred)
+    # precision = metrics.precision_score(y, y_pred)
+    # recall = metrics.recall_score(y, y_pred)
+    # cf_matrix = metrics.confusion_matrix(y, y_pred)
+    # roc_auc = metrics.roc_auc_score(y, probs_isgoal)
     
     #ROC AUC Curve
-    plot_ROC(y, pred_probs)
-        
+    # plot_ROC(y, pred_probs)
+    # print("End plot_ROC..")
+
+    print(pred_probs)
+    print(y)
     #Goal Rate Plot
     df_percentile = calc_percentile(pred_probs, y)
     goal_rate_df = goal_rate(df_percentile)
     plot_goal_rates(goal_rate_df)
-        
+    print("End plot_goal_rates..")
+ 
     #Cumulative Goal Rate Plot
     plot_cumulative_goal_rates(df_percentile)
-        
+    print("End plot_cumulative_goal_rates..")
+    
     #Calibration Curve
     plot_calibration_curve_prediction(y, pred_probs)   
+    print("End plot_calibration_curve_prediction..")
+
+    print("End plot..")
     
     metrics_dict = { 'accuracy': accuracy,
                         "f1_score": f1_score,
@@ -60,6 +70,7 @@ def push_best_model(X, y, model, experiment_name, model_name, tags=[]):
     experiment.log_image('cumulative_goal_rate.png', name= experiment_name + '_cumulative_goal_rate_plot.png', overwrite=True)
     experiment.log_image('calibration_curve.png', name= experiment_name + '_calibration_curve.png', overwrite=True)
     experiment.log_model(experiment_name, model_name)
-    
+    print("End push..")
+
     return pred_probs, accuracy, f1_score, precision, recall, roc_auc, cf_matrix
 
