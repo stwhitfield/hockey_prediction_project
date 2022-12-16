@@ -1,0 +1,5 @@
+To run:
+-Folder named "raw_data"
+-tidy2.py
+-DataScraping.py
+-feature_engineering_i.py
