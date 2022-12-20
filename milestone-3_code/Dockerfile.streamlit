@@ -1,0 +1,19 @@
+# You shouldn't need to change this
+FROM python:3.7
+# Variables
+ENV STREAMLIT_FILE="streamlit_app.py"
+ENV STREAMLIT_PORT=30005
+ENV STREAMLIT_IP=0.0.0.0
+# Create and cd into /code as your working directory
+WORKDIR /code
+# TODO: add code, optionally a default model if you want 
+ADD ift6758/requirements_webapp.txt ./
+RUN pip3 install -r requirements_webapp.txt
+ADD ift6758 ./ift6758/
+ADD streamlit_app.py .
+ENTRYPOINT [ "streamlit", "run", "streamlit_app.py" ]
+# TODO: expose ports (or do this in docker-compose)
+EXPOSE ${STREAMLIT_PORT}
+# TODO: specify default command - this is not required because you can always specify the command
+# either with the docker run command or in the docker-compose file
+CMD [ "--server.port=30005", "--server.address=0.0.0.0" ]

@@ -1,0 +1,14 @@
+# You shouldn't need to change this
+FROM python:3.8
+# Create and cd into /code as your working directory
+WORKDIR /code
+# TODO: add code, optionally a default model if you want 
+ADD ift6758/requirements.txt serving/app.py ./
+RUN pip install -r requirements.txt
+ADD serving/app.py .
+ENTRYPOINT [ "gunicorn" ]
+# TODO: expose ports (or do this in docker-compose)
+EXPOSE 30001
+# TODO: specify default command - this is not required because you can always specify the command
+# either with the docker run command or in the docker-compose file
+CMD [ "--bind", "0.0.0.0:30001", "app:app" ]

@@ -1,0 +1,8 @@
+pandas
+flask
+gunicorn
+scikit-learn==1.0.2
+comet_ml
+tensorflow
+xgboost==1.7.1
+tensorflow-io

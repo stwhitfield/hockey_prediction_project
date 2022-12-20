@@ -1,0 +1,23 @@
+# docker-compose.yml
+version: '3'
+
+services:
+  serving:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.serving
+    image: ift6758/serving:1.0.0
+    environment:
+      - COMET_API_KEY=${COMET_API_KEY}
+    ports:
+      - 30001:30001
+
+  streamlit:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.streamlit
+    image: ift6758/streamlit:1.0.0
+    environment:
+      - APP=serving
+    ports:
+      - 30005:30005
