@@ -14,7 +14,7 @@ if 'serving_client' not in st.session_state:
 if 'live_game' not in st.session_state:
     st.session_state.live_game = st.session_state.game_client.get_live_games()
 if 'live_games' not in st.session_state:
-    st.session_state.live_games = st.session_state.game_client.get_live_games()
+    st.session_state.live_games, st.session_state.game_status = st.session_state.game_client.get_live_games()
 if 'display_info' not in st.session_state:
     st.session_state.display_info = False
 if 'model_name' not in st.session_state:
@@ -72,11 +72,14 @@ with st.form("Game Selection"):
     )
     submitted = st.form_submit_button("Ping Game")
     if submitted:
-        if len(st.session_state.live_games) != 0:
+        index = st.session_state.game_status["game_ids"].index(live_game)
+        if len(st.session_state.live_games) != 0 and st.session_state.game_status["game_status"][index] == "Live":
             find_regex = re.compile('[0-9]+')
             st.session_state.live_game = find_regex.findall(live_game)[0]
             st.session_state.gral_info, st.session_state.events, st.session_state.goals, st.session_state.predicted_goals = st.session_state.game_client.ping_game(st.session_state.live_game, st.session_state.model_name)
             st.session_state.display_info = True
+        else:
+            st.write(f"{live_game} game has not started")
 #=== Info about the game
 if st.session_state.display_info:
     if st.session_state.gral_info['remaining_time'] == "END" or st.session_state.gral_info['remaining_time'] == "Final":

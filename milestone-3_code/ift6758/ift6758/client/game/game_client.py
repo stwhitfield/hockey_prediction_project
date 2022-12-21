@@ -192,23 +192,33 @@ class GameClient:
     @staticmethod
     def get_live_games():
         '''Doc'''
-        live_game_ids = ["Error connecting ..."]
+        game_ids = ["Error connecting ..."]
+        #
+        game_status = {
+            "game_ids" : [],
+            "game_status": []
+        }
+        #
         url = 'https://statsapi.web.nhl.com/api/v1/schedule'
         response = requests.get(url, timeout = 10)
         if response.status_code != 404:
             logger.info("Getting live games from api: %s", url)
-            live_game_ids = []
+            game_ids = []
             response_json = json.loads(response.content)
             games = response_json["dates"][0]["games"]
             for game in games:
-                if game["status"]["abstractGameState"] == 'Live':
-                    home_team = game['teams']['home']['team']['name']
-                    away_team = game['teams']['away']['team']['name']
-                    game_id = str(game['gamePk'])
-                    live_game_ids.append(home_team + ' vs. ' + away_team + " (" + game_id + ")")
-            return live_game_ids
+                # if game["status"]["abstractGameState"] == 'Live':
+                home_team = game['teams']['home']['team']['name']
+                away_team = game['teams']['away']['team']['name']
+                game_id = str(game['gamePk'])
+                game_ids.append(home_team + ' vs. ' + away_team + " (" + game_id + ")")
+                #
+                game_status["game_ids"].append(home_team + ' vs. ' + away_team + " (" + game_id + ")")
+                game_status["game_status"].append(game["status"]["abstractGameState"])
+                #
+            return game_ids, game_status
         logger.error("Error connecting to api: %s", url)
-        return live_game_ids
+        return game_ids
 
     @staticmethod
     def get_game_raw_data(game_id):
